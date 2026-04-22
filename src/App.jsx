@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Brand colors pulled directly from The CHOSEN Collective logo dots
 const RED = "#E8302A";
@@ -9,65 +9,34 @@ const WARM_WHITE = "#FFFFFF";
 const DARK = "#1A1A1A";
 const SOFT_GRAY = "#F2F0EB";
 
-const DEVOTIONALS = [
+// ─── ADMIN CONFIG ────────────────────────────────────────────────
+// Change this to your own password before deploying!
+const ADMIN_PASSWORD = "gracealivenow2026";
+// ─────────────────────────────────────────────────────────────────
+
+
   {
     id: 1,
-    date: "April 22, 2026",
-    title: "You Are Not Alone",
-    verse: "\"And remember, I am with you always, to the end of the age.\" — Matthew 28:20 CSB",
-    body: "There will be days when you feel invisible — when the hallways feel loud and your heart feels small. But God's promise isn't just for the big moments. It's for the Tuesday afternoons. The late nights. The hard conversations. He is with you always. Not sometimes. Always.",
-    reflection: "Where in your life do you need to remind yourself that God is present — not just in church, but right now?",
+    date: "",
+    title: "Coming Soon",
+    verse: "\"Your word is a lamp for my feet and a light on my path.\" — Psalm 119:105 CSB",
+    body: "Your first devotional will appear here. Check back soon!",
+    reflection: "What is God speaking to you today?",
     color: RED
-  },
-  {
-    id: 2,
-    date: "April 21, 2026",
-    title: "Chosen, Not Forgotten",
-    verse: "\"You did not choose me, but I chose you. I appointed you to go and produce fruit and that your fruit should remain.\" — John 15:16 CSB",
-    body: "In a world of followers, likes, and algorithms deciding who matters — God's selection process is completely different. He doesn't choose the most popular or the most polished. He chose you on purpose, with purpose. That's not just a nice feeling. That's your identity.",
-    reflection: "How does knowing you were chosen by God change how you see yourself today?",
-    color: BLUE
   }
 ];
 
-const ANNOUNCEMENTS = [
-  { id: 1, emoji: "🔥", title: "Youth Night — This Friday", detail: "7PM at the main sanctuary. Bring a friend. Dress comfortable.", date: "Apr 25", color: RED },
-  { id: 2, emoji: "📋", title: "Legacy Ball Applications Open", detail: "Applications for the 2026 Legacy Ball are now live. See the link in your email.", date: "Apr 20", color: BLUE },
-  { id: 3, emoji: "🙌", title: "Serve Team Needed", detail: "We're looking for youth to serve on the welcome team for the SHE Speaks recap event.", date: "Apr 18", color: YELLOW },
-  { id: 4, emoji: "🚌", title: "Summer Retreat Deposit Due", detail: "July 11–14 retreat deposits of $50 are due by May 1. Don't miss your spot!", date: "Apr 15", color: RED }
-];
+const ANNOUNCEMENTS = [];
 
-const INITIAL_PRAYERS = [
-  { id: 1, name: "Anonymous", request: "Please pray for my family — we're going through a hard season and I just need peace.", time: "2h ago", liked: false, likes: 14, color: RED },
-  { id: 2, name: "Jaylen M.", request: "I have finals coming up and I'm really stressed. Praying for focus and calm.", time: "5h ago", liked: false, likes: 9, color: BLUE },
-  { id: 3, name: "Amara T.", request: "Pray for my grandmother. She's in the hospital and we're trusting God for healing.", time: "1d ago", liked: false, likes: 31, color: YELLOW },
-  { id: 4, name: "Anonymous", request: "God, help me forgive someone who hurt me. I don't want to hold onto this anymore.", time: "2d ago", liked: false, likes: 22, color: RED }
-];
+const INITIAL_PRAYERS = [];
 
-const EVENTS = [
-  { id: 1, month: "APR", day: "25", title: "Youth Night", time: "7:00 PM", location: "Main Sanctuary", color: RED },
-  { id: 2, month: "MAY", day: "3", title: "Community Serve Day", time: "10:00 AM", location: "Church Parking Lot", color: BLUE },
-  { id: 3, month: "MAY", day: "10", title: "Parent & Youth Brunch", time: "12:00 PM", location: "Fellowship Hall", color: YELLOW },
-  { id: 4, month: "JUL", day: "11", title: "Summer Retreat", time: "All Day", location: "Camp Blue Ridge", color: BLUE }
-];
+const EVENTS = [];
 
-const SETLIST = [
-  { id: 1, title: "Goodness of God", artist: "CeCe Winans", key: "B♭", tempo: "Medium" },
-  { id: 2, title: "Way Maker", artist: "Sinach", key: "E", tempo: "Medium" },
-  { id: 3, title: "Jireh", artist: "Elevation Worship & Maverick City", key: "D", tempo: "Slow" },
-  { id: 4, title: "Take Me to the King", artist: "Tamela Mann", key: "A♭", tempo: "Slow" },
-  { id: 5, title: "Grateful", artist: "Hezekiah Walker", key: "G", tempo: "Upbeat" }
-];
+const SETLIST = [];
 
-const SERVE_DATE = "Friday, April 25, 2026";
+const SERVE_DATE = "Date coming soon";
 
-const INITIAL_CHATS = [
-  { id: 1, name: "Amara T.", avatar: "AT", color: RED, message: "Can't wait for Youth Night on Friday!! Who else is coming?? 🔥", time: "2m ago", reactions: [{ emoji: "🔥", count: 8 }, { emoji: "🙌", count: 5 }], reacted: [] },
-  { id: 2, name: "Jaylen M.", avatar: "JM", color: BLUE, message: "I've been listening to Jireh on repeat all week. That song hits different 😭", time: "15m ago", reactions: [{ emoji: "😭", count: 11 }, { emoji: "❤️", count: 6 }], reacted: [] },
-  { id: 3, name: "Destiny R.", avatar: "DR", color: YELLOW, message: "PSA: retreat deposits are due May 1st!! Don't sleep on it, last year sold out fast 👀", time: "1h ago", reactions: [{ emoji: "👀", count: 4 }, { emoji: "✅", count: 7 }], reacted: [] },
-  { id: 4, name: "Marcus W.", avatar: "MW", color: RED, message: "Today's devotional was exactly what I needed. Thank you Pastor for always speaking on time 🙏", time: "3h ago", reactions: [{ emoji: "🙏", count: 14 }, { emoji: "❤️", count: 9 }], reacted: [] },
-  { id: 5, name: "Zoe A.", avatar: "ZA", color: BLUE, message: "Just joined the praise team officially!! So excited to serve with y'all 🎶", time: "5h ago", reactions: [{ emoji: "🎶", count: 16 }, { emoji: "🙌", count: 12 }, { emoji: "❤️", count: 8 }], reacted: [] }
-];
+const INITIAL_CHATS = [];
 
 const QUICK_REACTIONS = ["🔥", "🙏", "❤️", "🙌", "😭", "✅"];
 
@@ -145,7 +114,90 @@ export default function ChosenCollectiveApp() {
   const [songSub, setSongSub] = useState({ title: "", artist: "", key: "", notes: "" });
   const [songSubmitted, setSongSubmitted] = useState(false);
 
-  // Chat state
+  // Admin state
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminPasswordError, setAdminPasswordError] = useState(false);
+  const [adminTab, setAdminTab] = useState("announcements");
+  const logoTapCount = useRef(0);
+  const logoTapTimer = useRef(null);
+
+  // Admin content state — mirrors the app data
+  const [adminAnnouncements, setAdminAnnouncements] = useState(ANNOUNCEMENTS);
+  const [adminEvents, setAdminEvents] = useState(EVENTS);
+  const [adminSetlist, setAdminSetlist] = useState(SETLIST);
+  const [adminServeDate, setAdminServeDate] = useState(SERVE_DATE);
+  const [adminDevotionals, setAdminDevotionals] = useState(DEVOTIONALS);
+
+  // Admin form state
+  const [newAnn, setNewAnn] = useState({ emoji: "📣", title: "", detail: "", date: "", color: RED });
+  const [newEvent, setNewEvent] = useState({ month: "", day: "", title: "", time: "", location: "", color: RED });
+  const [newSong, setNewSong] = useState({ title: "", artist: "", key: "", tempo: "Medium" });
+  const [newDevo, setNewDevo] = useState({ date: "", title: "", verse: "", body: "", reflection: "", color: RED });
+  const [adminSaved, setAdminSaved] = useState(false);
+
+  const handleLogoTap = () => {
+    logoTapCount.current += 1;
+    clearTimeout(logoTapTimer.current);
+    if (logoTapCount.current >= 5) {
+      logoTapCount.current = 0;
+      setShowAdmin(true);
+    } else {
+      logoTapTimer.current = setTimeout(() => { logoTapCount.current = 0; }, 2000);
+    }
+  };
+
+  const handleAdminLogin = () => {
+    if (adminPassword === ADMIN_PASSWORD) {
+      setAdminUnlocked(true);
+      setAdminPasswordError(false);
+      setAdminPassword("");
+    } else {
+      setAdminPasswordError(true);
+    }
+  };
+
+  const saveAndFlash = () => {
+    setAdminSaved(true);
+    setTimeout(() => setAdminSaved(false), 2000);
+  };
+
+  const addAnnouncement = () => {
+    if (!newAnn.title.trim()) return;
+    setAdminAnnouncements([{ ...newAnn, id: Date.now() }, ...adminAnnouncements]);
+    setNewAnn({ emoji: "📣", title: "", detail: "", date: "", color: RED });
+    saveAndFlash();
+  };
+
+  const removeAnnouncement = (id) => setAdminAnnouncements(adminAnnouncements.filter(a => a.id !== id));
+
+  const addEvent = () => {
+    if (!newEvent.title.trim()) return;
+    setAdminEvents([...adminEvents, { ...newEvent, id: Date.now() }]);
+    setNewEvent({ month: "", day: "", title: "", time: "", location: "", color: RED });
+    saveAndFlash();
+  };
+
+  const removeEvent = (id) => setAdminEvents(adminEvents.filter(e => e.id !== id));
+
+  const addSong = () => {
+    if (!newSong.title.trim()) return;
+    setAdminSetlist([...adminSetlist, { ...newSong, id: Date.now() }]);
+    setNewSong({ title: "", artist: "", key: "", tempo: "Medium" });
+    saveAndFlash();
+  };
+
+  const removeSong = (id) => setAdminSetlist(adminSetlist.filter(s => s.id !== id));
+
+  const saveDevo = () => {
+    if (!newDevo.title.trim()) return;
+    setAdminDevotionals([{ ...newDevo, id: Date.now() }, ...adminDevotionals]);
+    setNewDevo({ date: "", title: "", verse: "", body: "", reflection: "", color: RED });
+    saveAndFlash();
+  };
+
+
   const [chats, setChats] = useState(INITIAL_CHATS);
   const [chatName, setChatName] = useState("");
   const [chatMsg, setChatMsg] = useState("");
@@ -263,8 +315,10 @@ export default function ChosenCollectiveApp() {
         justifyContent: "space-between",
         position: "sticky", top: 0, zIndex: 50
       }}>
-        <ChosenLogo size="full" />
-        <div style={{
+        <div style={{ cursor: "default" }}>
+          <ChosenLogo size="full" />
+        </div>
+        <div onClick={() => setShowAdmin(true)} style={{
           width: 40, height: 40, borderRadius: "50%",
           background: `linear-gradient(135deg, ${RED}, ${YELLOW})`,
           display: "flex", alignItems: "center", justifyContent: "center",
@@ -358,7 +412,13 @@ export default function ChosenCollectiveApp() {
                 <div style={{ fontSize: 15, fontWeight: 900, color: DARK }}>What's New</div>
                 <DotRow gap={5} />
               </div>
-              {ANNOUNCEMENTS.map(a => (
+              {ANNOUNCEMENTS.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "24px 0", color: "#BBB" }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>📣</div>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>No announcements yet.</div>
+                  <div style={{ fontSize: 12, marginTop: 4 }}>Check back soon!</div>
+                </div>
+              ) : ANNOUNCEMENTS.map(a => (
                 <div key={a.id} style={{
                   background: WARM_WHITE,
                   borderRadius: 18,
@@ -533,7 +593,13 @@ export default function ChosenCollectiveApp() {
               Standing in Faith — {prayers.length} requests
             </div>
 
-            {prayers.map(p => (
+            {prayers.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "24px 0", color: "#BBB" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🙏</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>No prayer requests yet.</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>Be the first to share your heart.</div>
+              </div>
+            ) : prayers.map(p => (
               <div key={p.id} style={{
                 background: WARM_WHITE,
                 borderRadius: 18, padding: "16px 18px",
@@ -579,7 +645,13 @@ export default function ChosenCollectiveApp() {
             </div>
             <div style={{ fontSize: 13, color: "#999", marginBottom: 20 }}>Don't miss what God has next!</div>
 
-            {EVENTS.map(e => (
+            {EVENTS.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "24px 0", color: "#BBB" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>📅</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>No events yet.</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>Stay tuned — something is coming!</div>
+              </div>
+            ) : EVENTS.map(e => (
               <div key={e.id} style={{
                 background: WARM_WHITE,
                 borderRadius: 20, padding: "16px 18px",
@@ -657,7 +729,13 @@ export default function ChosenCollectiveApp() {
               Set List — {SETLIST.length} Songs
             </div>
 
-            {SETLIST.map((song, i) => {
+            {SETLIST.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "24px 0", color: "#BBB" }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>🎵</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>Set list coming soon.</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>Check back before your next serve date.</div>
+              </div>
+            ) : SETLIST.map((song, i) => {
               const dotColors = [RED, BLUE, YELLOW, RED, BLUE];
               const accent = dotColors[i % dotColors.length];
               const tempoColors = { Slow: BLUE, Medium: YELLOW, Upbeat: RED };
@@ -1096,6 +1174,302 @@ export default function ChosenCollectiveApp() {
           );
         })}
       </div>
+
+      {/* ── ADMIN PANEL OVERLAY ── */}
+      {showAdmin && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 999,
+          background: CREAM, maxWidth: 430, margin: "0 auto",
+          display: "flex", flexDirection: "column", overflowY: "auto"
+        }}>
+          {/* Admin Header */}
+          <div style={{
+            background: DARK, padding: "18px 20px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            position: "sticky", top: 0, zIndex: 10
+          }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: YELLOW, letterSpacing: "0.15em", textTransform: "uppercase" }}>Admin Panel</div>
+              <div style={{ fontSize: 17, fontWeight: 900, color: WARM_WHITE }}>The CHOSEN Collective</div>
+            </div>
+            <button className="tab-btn" onClick={() => { setShowAdmin(false); setAdminUnlocked(false); }} style={{
+              background: "rgba(255,255,255,0.1)", borderRadius: 10,
+              padding: "8px 14px", fontSize: 12, fontWeight: 800, color: WARM_WHITE
+            }}>✕ Close</button>
+          </div>
+
+          {/* Password Gate */}
+          {!adminUnlocked ? (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 32 }}>
+              <div style={{ width: "100%", maxWidth: 340 }}>
+                <div style={{ textAlign: "center", marginBottom: 28 }}>
+                  <div style={{ fontSize: 44, marginBottom: 12 }}>🔐</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: DARK }}>Leaders Only</div>
+                  <div style={{ fontSize: 13, color: "#999", marginTop: 6 }}>Enter your admin password to continue.</div>
+                </div>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={e => { setAdminPassword(e.target.value); setAdminPasswordError(false); }}
+                  onKeyDown={e => e.key === "Enter" && handleAdminLogin()}
+                  placeholder="Enter password"
+                  style={{
+                    width: "100%", background: WARM_WHITE,
+                    border: `2px solid ${adminPasswordError ? RED : "#E8E4DC"}`,
+                    borderRadius: 12, padding: "14px 16px",
+                    fontSize: 15, color: DARK, marginBottom: 12,
+                    fontFamily: "'Nunito', sans-serif", textAlign: "center"
+                  }}
+                />
+                {adminPasswordError && (
+                  <div style={{ fontSize: 12, color: RED, fontWeight: 700, textAlign: "center", marginBottom: 10 }}>
+                    Incorrect password. Try again.
+                  </div>
+                )}
+                <button className="pill-btn" onClick={handleAdminLogin} style={{
+                  width: "100%", padding: "14px",
+                  background: `linear-gradient(135deg, ${DARK}, #333)`,
+                  color: WARM_WHITE, fontSize: 14, fontWeight: 800
+                }}>Unlock Admin Panel</button>
+              </div>
+            </div>
+          ) : (
+            <div style={{ flex: 1 }}>
+
+              {/* Saved flash */}
+              {adminSaved && (
+                <div style={{
+                  position: "fixed", top: 70, left: "50%", transform: "translateX(-50%)",
+                  background: "#22C55E", color: WARM_WHITE, borderRadius: 100,
+                  padding: "8px 20px", fontSize: 13, fontWeight: 800,
+                  zIndex: 100, boxShadow: "0 4px 16px rgba(34,197,94,0.4)"
+                }} className="pop-in">✓ Saved!</div>
+              )}
+
+              {/* Admin Tabs */}
+              <div style={{
+                display: "flex", overflowX: "auto", gap: 8,
+                padding: "14px 16px", background: WARM_WHITE,
+                borderBottom: `2px solid ${SOFT_GRAY}`, position: "sticky", top: 62, zIndex: 9
+              }}>
+                {[
+                  { key: "announcements", label: "📣 News" },
+                  { key: "events",        label: "📅 Events" },
+                  { key: "devotionals",   label: "📖 Devos" },
+                  { key: "worship",       label: "🎶 Worship" }
+                ].map(t => (
+                  <button key={t.key} className="tab-btn" onClick={() => setAdminTab(t.key)}>
+                    <div style={{
+                      padding: "8px 14px", borderRadius: 100, whiteSpace: "nowrap",
+                      background: adminTab === t.key ? DARK : SOFT_GRAY,
+                      color: adminTab === t.key ? WARM_WHITE : "#777",
+                      fontSize: 12, fontWeight: 800, transition: "all 0.2s"
+                    }}>{t.label}</div>
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ padding: "20px 18px" }}>
+
+                {/* ── ANNOUNCEMENTS ── */}
+                {adminTab === "announcements" && (
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: DARK, marginBottom: 16 }}>Add Announcement</div>
+                    <div style={{ background: WARM_WHITE, borderRadius: 20, padding: 18, marginBottom: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                      {[
+                        { key: "emoji", placeholder: "Emoji (e.g. 🔥)" },
+                        { key: "title", placeholder: "Title *" },
+                        { key: "detail", placeholder: "Details" },
+                        { key: "date", placeholder: "Date (e.g. May 3)" }
+                      ].map(f => (
+                        <input key={f.key} value={newAnn[f.key]} onChange={e => setNewAnn({ ...newAnn, [f.key]: e.target.value })}
+                          placeholder={f.placeholder} style={{ width: "100%", background: SOFT_GRAY, border: "none", borderRadius: 10, padding: "11px 14px", fontSize: 13, color: DARK, marginBottom: 10, fontFamily: "'Nunito', sans-serif" }} />
+                      ))}
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                        {[RED, BLUE, YELLOW].map(c => (
+                          <button key={c} className="tab-btn" onClick={() => setNewAnn({ ...newAnn, color: c })}>
+                            <div style={{ width: 28, height: 28, borderRadius: 8, background: c, border: newAnn.color === c ? `3px solid ${DARK}` : "3px solid transparent" }} />
+                          </button>
+                        ))}
+                        <span style={{ fontSize: 12, color: "#999", alignSelf: "center" }}>Pick color</span>
+                      </div>
+                      <button className="pill-btn" onClick={addAnnouncement} style={{ width: "100%", padding: 13, background: `linear-gradient(135deg, ${RED}, #F05A27)`, color: WARM_WHITE, fontSize: 14, fontWeight: 800 }}>
+                        Add Announcement
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#AAA", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Current Announcements ({adminAnnouncements.length})</div>
+                    {adminAnnouncements.length === 0 && <div style={{ color: "#CCC", fontSize: 13, textAlign: "center", padding: "16px 0" }}>No announcements yet.</div>}
+                    {adminAnnouncements.map(a => (
+                      <div key={a.id} style={{ background: WARM_WHITE, borderRadius: 14, padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 10, borderLeft: `4px solid ${a.color}` }}>
+                        <span style={{ fontSize: 18 }}>{a.emoji}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>{a.title}</div>
+                          <div style={{ fontSize: 11, color: "#999" }}>{a.date}</div>
+                        </div>
+                        <button className="tab-btn" onClick={() => removeAnnouncement(a.id)} style={{ fontSize: 18, color: "#DDD" }}>🗑</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── EVENTS ── */}
+                {adminTab === "events" && (
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: DARK, marginBottom: 16 }}>Add Event</div>
+                    <div style={{ background: WARM_WHITE, borderRadius: 20, padding: 18, marginBottom: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+                        {[
+                          { key: "month", placeholder: "Month (e.g. MAY)" },
+                          { key: "day",   placeholder: "Day (e.g. 10)" }
+                        ].map(f => (
+                          <input key={f.key} value={newEvent[f.key]} onChange={e => setNewEvent({ ...newEvent, [f.key]: e.target.value })}
+                            placeholder={f.placeholder} style={{ background: SOFT_GRAY, border: "none", borderRadius: 10, padding: "11px 12px", fontSize: 13, color: DARK, fontFamily: "'Nunito', sans-serif" }} />
+                        ))}
+                      </div>
+                      {[
+                        { key: "title",    placeholder: "Event name *" },
+                        { key: "time",     placeholder: "Time (e.g. 7:00 PM)" },
+                        { key: "location", placeholder: "Location" }
+                      ].map(f => (
+                        <input key={f.key} value={newEvent[f.key]} onChange={e => setNewEvent({ ...newEvent, [f.key]: e.target.value })}
+                          placeholder={f.placeholder} style={{ width: "100%", background: SOFT_GRAY, border: "none", borderRadius: 10, padding: "11px 14px", fontSize: 13, color: DARK, marginBottom: 10, fontFamily: "'Nunito', sans-serif" }} />
+                      ))}
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                        {[RED, BLUE, YELLOW].map(c => (
+                          <button key={c} className="tab-btn" onClick={() => setNewEvent({ ...newEvent, color: c })}>
+                            <div style={{ width: 28, height: 28, borderRadius: 8, background: c, border: newEvent.color === c ? `3px solid ${DARK}` : "3px solid transparent" }} />
+                          </button>
+                        ))}
+                        <span style={{ fontSize: 12, color: "#999", alignSelf: "center" }}>Pick color</span>
+                      </div>
+                      <button className="pill-btn" onClick={addEvent} style={{ width: "100%", padding: 13, background: `linear-gradient(135deg, ${BLUE}, #45C5F5)`, color: WARM_WHITE, fontSize: 14, fontWeight: 800 }}>
+                        Add Event
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#AAA", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Current Events ({adminEvents.length})</div>
+                    {adminEvents.length === 0 && <div style={{ color: "#CCC", fontSize: 13, textAlign: "center", padding: "16px 0" }}>No events yet.</div>}
+                    {adminEvents.map(e => (
+                      <div key={e.id} style={{ background: WARM_WHITE, borderRadius: 14, padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 40, height: 44, borderRadius: 10, background: e.color, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <div style={{ fontSize: 8, fontWeight: 900, color: "rgba(255,255,255,0.8)" }}>{e.month}</div>
+                          <div style={{ fontSize: 16, fontWeight: 900, color: WARM_WHITE }}>{e.day}</div>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>{e.title}</div>
+                          <div style={{ fontSize: 11, color: "#999" }}>{e.time} · {e.location}</div>
+                        </div>
+                        <button className="tab-btn" onClick={() => removeEvent(e.id)} style={{ fontSize: 18, color: "#DDD" }}>🗑</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── DEVOTIONALS ── */}
+                {adminTab === "devotionals" && (
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: DARK, marginBottom: 16 }}>Add Devotional</div>
+                    <div style={{ background: WARM_WHITE, borderRadius: 20, padding: 18, marginBottom: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                      {[
+                        { key: "date",       placeholder: "Date (e.g. May 3, 2026)" },
+                        { key: "title",      placeholder: "Devotional title *" },
+                        { key: "verse",      placeholder: "Scripture verse (include reference)" },
+                      ].map(f => (
+                        <input key={f.key} value={newDevo[f.key]} onChange={e => setNewDevo({ ...newDevo, [f.key]: e.target.value })}
+                          placeholder={f.placeholder} style={{ width: "100%", background: SOFT_GRAY, border: "none", borderRadius: 10, padding: "11px 14px", fontSize: 13, color: DARK, marginBottom: 10, fontFamily: "'Nunito', sans-serif" }} />
+                      ))}
+                      {[
+                        { key: "body",       placeholder: "Devotional message..." },
+                        { key: "reflection", placeholder: "Reflection question..." }
+                      ].map(f => (
+                        <textarea key={f.key} value={newDevo[f.key]} onChange={e => setNewDevo({ ...newDevo, [f.key]: e.target.value })}
+                          placeholder={f.placeholder} rows={3}
+                          style={{ width: "100%", background: SOFT_GRAY, border: "none", borderRadius: 10, padding: "11px 14px", fontSize: 13, color: DARK, resize: "none", lineHeight: 1.6, marginBottom: 10, fontFamily: "'Nunito', sans-serif" }} />
+                      ))}
+                      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                        {[RED, BLUE, YELLOW].map(c => (
+                          <button key={c} className="tab-btn" onClick={() => setNewDevo({ ...newDevo, color: c })}>
+                            <div style={{ width: 28, height: 28, borderRadius: 8, background: c, border: newDevo.color === c ? `3px solid ${DARK}` : "3px solid transparent" }} />
+                          </button>
+                        ))}
+                        <span style={{ fontSize: 12, color: "#999", alignSelf: "center" }}>Pick accent color</span>
+                      </div>
+                      <button className="pill-btn" onClick={saveDevo} style={{ width: "100%", padding: 13, background: `linear-gradient(135deg, ${RED}, #F05A27)`, color: WARM_WHITE, fontSize: 14, fontWeight: 800 }}>
+                        Publish Devotional
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#AAA", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Published Devotionals ({adminDevotionals.length})</div>
+                    {adminDevotionals.map(d => (
+                      <div key={d.id} style={{ background: WARM_WHITE, borderRadius: 14, padding: "12px 16px", marginBottom: 8, borderLeft: `4px solid ${d.color}` }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>{d.title}</div>
+                        <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{d.date}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── WORSHIP ── */}
+                {adminTab === "worship" && (
+                  <div>
+                    <div style={{ fontSize: 15, fontWeight: 900, color: DARK, marginBottom: 16 }}>Worship & Set List</div>
+
+                    {/* Serve date */}
+                    <div style={{ background: WARM_WHITE, borderRadius: 20, padding: 18, marginBottom: 20, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: DARK, marginBottom: 10 }}>Next Serve Date</div>
+                      <input value={adminServeDate} onChange={e => setAdminServeDate(e.target.value)}
+                        placeholder="e.g. Friday, May 9, 2026"
+                        style={{ width: "100%", background: SOFT_GRAY, border: "none", borderRadius: 10, padding: "11px 14px", fontSize: 13, color: DARK, marginBottom: 12, fontFamily: "'Nunito', sans-serif" }} />
+                      <button className="pill-btn" onClick={saveAndFlash} style={{ width: "100%", padding: 12, background: `linear-gradient(135deg, ${YELLOW}, #F8C04A)`, color: WARM_WHITE, fontSize: 13, fontWeight: 800 }}>
+                        Save Serve Date
+                      </button>
+                    </div>
+
+                    {/* Add song */}
+                    <div style={{ background: WARM_WHITE, borderRadius: 20, padding: 18, marginBottom: 24, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: DARK, marginBottom: 10 }}>Add Song to Set List</div>
+                      {[
+                        { key: "title",  placeholder: "Song title *" },
+                        { key: "artist", placeholder: "Artist" },
+                        { key: "key",    placeholder: "Key (e.g. G, B♭, F#)" }
+                      ].map(f => (
+                        <input key={f.key} value={newSong[f.key]} onChange={e => setNewSong({ ...newSong, [f.key]: e.target.value })}
+                          placeholder={f.placeholder} style={{ width: "100%", background: SOFT_GRAY, border: "none", borderRadius: 10, padding: "11px 14px", fontSize: 13, color: DARK, marginBottom: 10, fontFamily: "'Nunito', sans-serif" }} />
+                      ))}
+                      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                        {["Slow", "Medium", "Upbeat"].map(t => (
+                          <button key={t} className="tab-btn" onClick={() => setNewSong({ ...newSong, tempo: t })}>
+                            <div style={{ padding: "7px 14px", borderRadius: 100, background: newSong.tempo === t ? DARK : SOFT_GRAY, color: newSong.tempo === t ? WARM_WHITE : "#777", fontSize: 12, fontWeight: 800 }}>{t}</div>
+                          </button>
+                        ))}
+                      </div>
+                      <button className="pill-btn" onClick={addSong} style={{ width: "100%", padding: 13, background: `linear-gradient(135deg, ${YELLOW}, #F8C04A)`, color: WARM_WHITE, fontSize: 14, fontWeight: 800 }}>
+                        Add to Set List
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: 12, fontWeight: 800, color: "#AAA", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Current Set List ({adminSetlist.length} songs)</div>
+                    {adminSetlist.length === 0 && <div style={{ color: "#CCC", fontSize: 13, textAlign: "center", padding: "16px 0" }}>No songs yet.</div>}
+                    {adminSetlist.map((s, i) => (
+                      <div key={s.id} style={{ background: WARM_WHITE, borderRadius: 14, padding: "12px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 8, background: [RED,BLUE,YELLOW][i%3] + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 900, color: [RED,BLUE,YELLOW][i%3] }}>{i+1}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>{s.title}</div>
+                          <div style={{ fontSize: 11, color: "#999" }}>{s.artist} · Key of {s.key} · {s.tempo}</div>
+                        </div>
+                        <button className="tab-btn" onClick={() => removeSong(s.id)} style={{ fontSize: 18, color: "#DDD" }}>🗑</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
