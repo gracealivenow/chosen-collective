@@ -14,7 +14,7 @@ const SOFT_GRAY = "#F2F0EB";
 const ADMIN_PASSWORD = "gracealivenow2026";
 // ─────────────────────────────────────────────────────────────────
 
-
+const DEVOTIONALS = [
   {
     id: 1,
     date: "",
