@@ -123,7 +123,9 @@ export default function ChosenCollectiveApp() {
   const logoTapCount = useRef(0);
   const logoTapTimer = useRef(null);
 
-  // Admin content state — mirrors the app data
+  const [songSuggestions, setSongSuggestions] = useState([]);
+
+  // Load song suggestions for admin
   const [adminAnnouncements, setAdminAnnouncements] = useState(ANNOUNCEMENTS);
   const [adminEvents, setAdminEvents] = useState(EVENTS);
   const [adminSetlist, setAdminSetlist] = useState(SETLIST);
@@ -153,6 +155,11 @@ export default function ChosenCollectiveApp() {
       setAdminUnlocked(true);
       setAdminPasswordError(false);
       setAdminPassword("");
+      // Load song suggestions when admin logs in
+      fetch("/api/get-song-suggestions")
+        .then(r => r.json())
+        .then(data => { if (data.suggestions) setSongSuggestions(data.suggestions); })
+        .catch(console.error);
     } else {
       setAdminPasswordError(true);
     }
@@ -206,6 +213,7 @@ export default function ChosenCollectiveApp() {
   const [msgSubmitted, setMsgSubmitted] = useState(false);
 
   useEffect(() => {
+    // Load devotionals
     fetch("/api/get-devotionals")
       .then((r) => r.json())
       .then((data) => {
@@ -214,19 +222,46 @@ export default function ChosenCollectiveApp() {
         }
       })
       .catch(console.error);
+
+    // Load prayers
+    fetch("/api/get-prayers")
+      .then((r) => r.json())
+      .then((data) => { if (data.prayers) setPrayers(data.prayers); })
+      .catch(console.error);
+
+    // Load chats
+    fetch("/api/get-chats")
+      .then((r) => r.json())
+      .then((data) => { if (data.chats) setChats(data.chats); })
+      .catch(console.error);
+
+    // Poll for new chats and prayers every 8 seconds
+    const interval = setInterval(() => {
+      fetch("/api/get-chats")
+        .then((r) => r.json())
+        .then((data) => { if (data.chats) setChats(data.chats); })
+        .catch(console.error);
+      fetch("/api/get-prayers")
+        .then((r) => r.json())
+        .then((data) => { if (data.prayers) setPrayers(data.prayers); })
+        .catch(console.error);
+    }, 8000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handlePrayerSubmit = () => {
     if (!newPrayer.trim()) return;
     const colors = [RED, BLUE, YELLOW];
+    const color = colors[Math.floor(Math.random() * 3)];
     const entry = {
       id: Date.now(),
       name: isAnon ? "Anonymous" : (prayerName.trim() || "Anonymous"),
       request: newPrayer.trim(),
-      time: "just now",
+      time: new Date().toISOString(),
       liked: false,
       likes: 0,
-      color: colors[Math.floor(Math.random() * 3)]
+      color
     };
     setPrayers([entry, ...prayers]);
     setNewPrayer("");
@@ -234,6 +269,11 @@ export default function ChosenCollectiveApp() {
     setIsAnon(false);
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 3000);
+    fetch("/api/save-prayer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: entry.name, request: entry.request, color })
+    }).catch(console.error);
   };
 
   const toggleLike = (id) => {
@@ -242,6 +282,16 @@ export default function ChosenCollectiveApp() {
 
   const handleSongSubmit = () => {
     if (!songSub.title.trim()) return;
+    fetch("/api/save-song-suggestion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: songSub.title,
+        artist: songSub.artist,
+        key: songSub.key,
+        notes: songSub.notes
+      })
+    }).catch(console.error);
     setSongSubmitted(true);
     setSongSub({ title: "", artist: "", key: "", notes: "" });
     setTimeout(() => setSongSubmitted(false), 3500);
@@ -251,19 +301,25 @@ export default function ChosenCollectiveApp() {
     if (!chatMsg.trim() || !chatName.trim()) return;
     const initials = chatName.trim().split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
     const avatarColors = [RED, BLUE, YELLOW];
+    const color = avatarColors[chats.length % 3];
     const entry = {
       id: Date.now(),
       name: chatName.trim(),
       avatar: initials,
-      color: avatarColors[chats.length % 3],
+      color,
       message: chatMsg.trim(),
-      time: "just now",
+      time: new Date().toISOString(),
       reactions: [],
       reacted: []
     };
     setChats([...chats, entry]);
     setChatMsg("");
     setChatNameSaved(true);
+    fetch("/api/save-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: entry.name, avatar: initials, color, message: entry.message })
+    }).catch(console.error);
   };
 
   const handleReact = (chatId, emoji) => {
@@ -284,6 +340,11 @@ export default function ChosenCollectiveApp() {
 
   const handleMsgSubmit = () => {
     if (!message.body.trim()) return;
+    fetch("/api/save-message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: message.name, email: message.email, body: message.body })
+    }).catch(console.error);
     setMsgSubmitted(true);
     setMessage({ name: "", email: "", body: "" });
     setTimeout(() => setMsgSubmitted(false), 4000);
@@ -874,8 +935,8 @@ export default function ChosenCollectiveApp() {
             {/* Leader cards */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 24 }}>
               {[
-                { name: "Kindal White", role: "Youth Leader", emoji: "👩🏾", color: RED },
-                { name: "George White", role: "Youth Leader", emoji: "👨🏾", color: BLUE }
+                { name: "Kindal White", role: "Youth Leader", photo: "https://i.imgur.com/t71XOKt.jpg", color: RED },
+                { name: "George White", role: "Youth Leader", photo: "https://i.imgur.com/hx67Si6.jpg", color: BLUE }
               ].map((leader, i) => (
                 <div key={i} style={{
                   background: WARM_WHITE,
@@ -884,13 +945,18 @@ export default function ChosenCollectiveApp() {
                   border: `2px solid ${leader.color}20`,
                   boxShadow: "0 2px 12px rgba(0,0,0,0.06)"
                 }}>
-                  <div style={{
-                    width: 52, height: 52, borderRadius: "50%",
-                    background: leader.color + "18",
-                    border: `3px solid ${leader.color}40`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 26, margin: "0 auto 10px"
-                  }}>{leader.emoji}</div>
+                  <img
+                    src={leader.photo}
+                    alt={leader.name}
+                    style={{
+                      width: 70, height: 70, borderRadius: "50%",
+                      objectFit: "cover",
+                      border: `3px solid ${leader.color}`,
+                      margin: "0 auto 10px",
+                      display: "block",
+                      boxShadow: `0 4px 14px ${leader.color}40`
+                    }}
+                  />
                   <div style={{ fontSize: 13, fontWeight: 900, color: DARK }}>{leader.name}</div>
                   <div style={{ fontSize: 11, color: leader.color, fontWeight: 700, marginTop: 2 }}>{leader.role}</div>
                 </div>
@@ -1472,6 +1538,33 @@ export default function ChosenCollectiveApp() {
                         <button className="tab-btn" onClick={() => removeSong(s.id)} style={{ fontSize: 18, color: "#DDD" }}>🗑</button>
                       </div>
                     ))}
+
+                    {/* Song Suggestions from Teens */}
+                    <div style={{ marginTop: 28 }}>
+                      <div style={{ fontSize: 15, fontWeight: 900, color: DARK, marginBottom: 4 }}>Song Suggestions from Teens</div>
+                      <div style={{ fontSize: 13, color: "#999", marginBottom: 16 }}>Songs your youth submitted for consideration.</div>
+                      {songSuggestions.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: "20px 0", color: "#CCC" }}>
+                          <div style={{ fontSize: 28, marginBottom: 8 }}>🎵</div>
+                          <div style={{ fontSize: 13 }}>No suggestions yet.</div>
+                        </div>
+                      ) : songSuggestions.map((s, i) => (
+                        <div key={s.id} style={{
+                          background: WARM_WHITE, borderRadius: 14,
+                          padding: "14px 16px", marginBottom: 10,
+                          borderLeft: `4px solid ${[RED,BLUE,YELLOW][i%3]}`,
+                          boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
+                        }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: DARK }}>{s.title}</div>
+                          {s.artist && <div style={{ fontSize: 12, color: "#777", marginTop: 2 }}>by {s.artist}</div>}
+                          {s.key && <div style={{ fontSize: 12, color: "#999", marginTop: 2 }}>Key: {s.key}</div>}
+                          {s.notes && <div style={{ fontSize: 12, color: "#AAA", marginTop: 4, fontStyle: "italic" }}>"{s.notes}"</div>}
+                          <div style={{ fontSize: 11, color: "#CCC", marginTop: 6 }}>
+                            {new Date(s.time).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 
