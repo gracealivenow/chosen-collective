@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import emailjs from "@emailjs/browser";
 
 emailjs.init("ZO9Pl_54bMxJkS-Hs");
-import emailjs from "@emailjs/browser";
 
 // Brand colors pulled directly from The CHOSEN Collective logo dots
 const RED = "#E8302A";
