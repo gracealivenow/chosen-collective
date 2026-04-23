@@ -277,7 +277,16 @@ export default function ChosenCollectiveApp() {
     setMessage({ name: "", email: "", body: "" });
     setTimeout(() => setMsgSubmitted(false), 4000);
   };
-
+useEffect(() => {
+  fetch("/api/get-devotionals")
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.devotionals && data.devotionals.length > 0) {
+        setAdminDevotionals(data.devotionals);
+      }
+    })
+    .catch(console.error);
+}, []);
   const dev = DEVOTIONALS[devIndex];
 
   return (
