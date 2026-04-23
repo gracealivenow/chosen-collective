@@ -277,17 +277,8 @@ export default function ChosenCollectiveApp() {
     setMessage({ name: "", email: "", body: "" });
     setTimeout(() => setMsgSubmitted(false), 4000);
   };
-useEffect(() => {
-  fetch("/api/get-devotionals")
-    .then((r) => r.json())
-    .then((data) => {
-      if (data.devotionals && data.devotionals.length > 0) {
-        setAdminDevotionals(data.devotionals);
-      }
-    })
-    .catch(console.error);
-}, []);
-  const dev = DEVOTIONALS[devIndex];
+
+  const dev = (adminDevotionals.length > 0 ? adminDevotionals : DEVOTIONALS)[devIndex] || DEVOTIONALS[0];
 
   return (
     <div style={{
@@ -466,17 +457,17 @@ useEffect(() => {
 
             {/* Day selector */}
             <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-              {DEVOTIONALS.map((d, i) => (
+              {adminDevotionals.map((d, i) => (
                 <button key={i} className="tab-btn" onClick={() => setDevIndex(i)}>
                   <div style={{
                     padding: "8px 16px", borderRadius: 100,
-                    background: devIndex === i ? DEVOTIONALS[i].color : WARM_WHITE,
+                    background: devIndex === i ? adminDevotionals[i].color : WARM_WHITE,
                     color: devIndex === i ? WARM_WHITE : "#999",
                     fontSize: 12, fontWeight: 800,
-                    border: `2px solid ${devIndex === i ? DEVOTIONALS[i].color : "#E8E4DC"}`,
+                    border: `2px solid ${devIndex === i ? adminDevotionals[i].color : "#E8E4DC"}`,
                     transition: "all 0.25s"
                   }}>
-                    {i === 0 ? "Today" : "Yesterday"}
+                    {i === 0 ? "Today" : i === 1 ? "Yesterday" : d.date}
                   </div>
                 </button>
               ))}
