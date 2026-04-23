@@ -1,4 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import emailjs from "@emailjs/browser";
+
+emailjs.init("ZO9Pl_54bMxJkS-Hs");
+import emailjs from "@emailjs/browser";
 
 // Brand colors pulled directly from The CHOSEN Collective logo dots
 const RED = "#E8302A";
@@ -282,6 +286,7 @@ export default function ChosenCollectiveApp() {
 
   const handleSongSubmit = () => {
     if (!songSub.title.trim()) return;
+    // Save to Firebase
     fetch("/api/save-song-suggestion", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -292,6 +297,22 @@ export default function ChosenCollectiveApp() {
         notes: songSub.notes
       })
     }).catch(console.error);
+    // Send email directly from browser via EmailJS
+    emailjs.send(
+      "service_mwzf07u",
+      "template_ndlfg0j",
+      {
+        subject: `🎶 New Song Suggestion — The CHOSEN Collective`,
+        message: `SONG TITLE: ${songSub.title}
+${songSub.artist ? `ARTIST: ${songSub.artist}` : ""}
+${songSub.key ? `KEY: ${songSub.key}` : ""}
+${songSub.notes ? `\nNOTES: "${songSub.notes}"` : ""}
+
+---
+Sent via The CHOSEN Collective App`
+      },
+      "ZO9Pl_54bMxJkS-Hs"
+    ).catch(console.error);
     setSongSubmitted(true);
     setSongSub({ title: "", artist: "", key: "", notes: "" });
     setTimeout(() => setSongSubmitted(false), 3500);
@@ -340,11 +361,29 @@ export default function ChosenCollectiveApp() {
 
   const handleMsgSubmit = () => {
     if (!message.body.trim()) return;
+    // Save to Firebase
     fetch("/api/save-message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: message.name, email: message.email, body: message.body })
     }).catch(console.error);
+    // Send email directly from browser via EmailJS
+    emailjs.send(
+      "service_mwzf07u",
+      "template_ndlfg0j",
+      {
+        subject: `💌 Confidential Message from ${message.name || "Anonymous"} — The CHOSEN Collective`,
+        message: `FROM: ${message.name || "Anonymous"}
+${message.email ? `REPLY TO: ${message.email}` : "No reply email provided"}
+
+MESSAGE:
+${message.body}
+
+---
+Sent via The CHOSEN Collective App`
+      },
+      "ZO9Pl_54bMxJkS-Hs"
+    ).catch(console.error);
     setMsgSubmitted(true);
     setMessage({ name: "", email: "", body: "" });
     setTimeout(() => setMsgSubmitted(false), 4000);
