@@ -359,7 +359,9 @@ Sent via The CHOSEN Collective App`
   };
 
   const handleMsgSubmit = () => {
-    if (!message.body.trim()) return;
+    console.log("Submit clicked, body:", message.body);
+    if (!message.body.trim()) { console.log("Body empty, returning"); return; }
+    console.log("Sending email via EmailJS...");
     // Save to Firebase
     fetch("/api/save-message", {
       method: "POST",
