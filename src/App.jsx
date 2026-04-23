@@ -205,6 +205,17 @@ export default function ChosenCollectiveApp() {
   const [message, setMessage] = useState({ name: "", email: "", body: "" });
   const [msgSubmitted, setMsgSubmitted] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/get-devotionals")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.devotionals && data.devotionals.length > 0) {
+          setAdminDevotionals(data.devotionals);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   const handlePrayerSubmit = () => {
     if (!newPrayer.trim()) return;
     const colors = [RED, BLUE, YELLOW];
