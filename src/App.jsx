@@ -5,7 +5,9 @@ import SignupScreen from './screens/SignupScreen';
 import HomeScreen from './screens/HomeScreen';
 import DevoScreen from './screens/DevoScreen';
 import PrayerScreen from './screens/PrayerScreen';
-import PlaceholderScreen from './screens/PlaceholderScreen';
+import WorshipScreen from './screens/WorshipScreen';
+import ChatScreen from './screens/ChatScreen';
+import ConnectScreen from './screens/ConnectScreen';
 import BottomTabs from './components/BottomTabs';
 
 function MainApp() {
@@ -32,9 +34,9 @@ function MainApp() {
       case 'Home': return <HomeScreen onNavigate={setActiveTab} />;
       case 'Devo': return <DevoScreen />;
       case 'Prayer': return <PrayerScreen />;
-      case 'Worship': return <PlaceholderScreen name="Worship" />;
-      case 'Chat': return <PlaceholderScreen name="Chat" />;
-      case 'Connect': return <PlaceholderScreen name="Connect" />;
+      case 'Worship': return <WorshipScreen />;
+      case 'Chat': return <ChatScreen />;
+      case 'Connect': return <ConnectScreen />;
       default: return <HomeScreen onNavigate={setActiveTab} />;
     }
   };
