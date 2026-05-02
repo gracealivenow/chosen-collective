@@ -1,13 +1,17 @@
 import { useState } from 'react';
-import { signOut } from 'firebase/auth';
-import { auth } from './config/firebase';
 import { UserProvider, useUser } from './context/UserContext';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
+import HomeScreen from './screens/HomeScreen';
+import DevoScreen from './screens/DevoScreen';
+import PrayerScreen from './screens/PrayerScreen';
+import PlaceholderScreen from './screens/PlaceholderScreen';
+import BottomTabs from './components/BottomTabs';
 
 function MainApp() {
-  const { user, profile, loading } = useUser();
+  const { user, loading } = useUser();
   const [showSignup, setShowSignup] = useState(false);
+  const [activeTab, setActiveTab] = useState('Home');
 
   if (loading) {
     return (
@@ -23,23 +27,23 @@ function MainApp() {
       : <LoginScreen onSwitch={() => setShowSignup(true)} />;
   }
 
-  // Placeholder until Session 2 builds the real screens
+  const renderScreen = () => {
+    switch (activeTab) {
+      case 'Home': return <HomeScreen onNavigate={setActiveTab} />;
+      case 'Devo': return <DevoScreen />;
+      case 'Prayer': return <PrayerScreen />;
+      case 'Worship': return <PlaceholderScreen name="Worship" />;
+      case 'Chat': return <PlaceholderScreen name="Chat" />;
+      case 'Connect': return <PlaceholderScreen name="Connect" />;
+      default: return <HomeScreen onNavigate={setActiveTab} />;
+    }
+  };
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#FDFCF8', padding: 40, textAlign: 'center' }}>
-      <h1 style={{ color: '#1A1A1A' }}>You are signed in! ✨</h1>
-      <p style={{ color: '#777' }}>Welcome, {profile?.firstName || user.email}</p>
-      <p style={{ color: '#999', fontSize: 13 }}>The full app screens are coming in the next session.</p>
-      <button
-        onClick={() => signOut(auth)}
-        style={{
-          marginTop: 20, padding: '12px 30px', borderRadius: 100,
-          backgroundColor: '#E8302A', color: 'white', border: 'none',
-          fontSize: 14, fontWeight: 700, cursor: 'pointer',
-        }}
-      >
-        Sign Out
-      </button>
-    </div>
+    <>
+      {renderScreen()}
+      <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
+    </>
   );
 }
 
