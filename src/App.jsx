@@ -9,6 +9,7 @@ import WorshipScreen from './screens/WorshipScreen';
 import ChatScreen from './screens/ChatScreen';
 import ConnectScreen from './screens/ConnectScreen';
 import BottomTabs from './components/BottomTabs';
+import InstallPrompt from './components/InstallPrompt';
 
 function MainApp() {
   const { user, loading } = useUser();
@@ -45,6 +46,7 @@ function MainApp() {
     <>
       {renderScreen()}
       <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
+       <InstallPrompt />
     </>
   );
 }
