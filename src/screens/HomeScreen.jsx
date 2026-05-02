@@ -43,12 +43,8 @@ export default function HomeScreen({ onNavigate, onAdminClick }) {
   ];
 
   const handleQuickLink = (screen) => {
-    if (screen === 'Events') {
-      alert('Events screen coming soon!');
-      return;
-    }
-    onNavigate(screen);
-  };
+  onNavigate(screen);
+};
 
   const handleSignOut = async () => {
     await signOut(auth);

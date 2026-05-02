@@ -8,6 +8,7 @@ import PrayerScreen from './screens/PrayerScreen';
 import WorshipScreen from './screens/WorshipScreen';
 import ChatScreen from './screens/ChatScreen';
 import ConnectScreen from './screens/ConnectScreen';
+import EventsScreen from './screens/EventsScreen';
 import AdminScreen from './screens/AdminScreen';
 import BottomTabs from './components/BottomTabs';
 import InstallPrompt from './components/InstallPrompt';
@@ -17,6 +18,7 @@ function MainApp() {
   const [showSignup, setShowSignup] = useState(false);
   const [activeTab, setActiveTab] = useState('Home');
   const [adminMode, setAdminMode] = useState(false);
+  const [eventsMode, setEventsMode] = useState(false);
 
   if (loading) {
     return (
@@ -36,15 +38,27 @@ function MainApp() {
     return <AdminScreen onClose={() => setAdminMode(false)} />;
   }
 
+  if (eventsMode) {
+    return <EventsScreen onBack={() => setEventsMode(false)} />;
+  }
+
+  const handleNavigate = (screen) => {
+    if (screen === 'Events') {
+      setEventsMode(true);
+      return;
+    }
+    setActiveTab(screen);
+  };
+
   const renderScreen = () => {
     switch (activeTab) {
-      case 'Home': return <HomeScreen onNavigate={setActiveTab} onAdminClick={() => setAdminMode(true)} />;
+      case 'Home': return <HomeScreen onNavigate={handleNavigate} onAdminClick={() => setAdminMode(true)} />;
       case 'Devo': return <DevoScreen />;
       case 'Prayer': return <PrayerScreen />;
       case 'Worship': return <WorshipScreen />;
       case 'Chat': return <ChatScreen />;
       case 'Connect': return <ConnectScreen />;
-      default: return <HomeScreen onNavigate={setActiveTab} onAdminClick={() => setAdminMode(true)} />;
+      default: return <HomeScreen onNavigate={handleNavigate} onAdminClick={() => setAdminMode(true)} />;
     }
   };
 

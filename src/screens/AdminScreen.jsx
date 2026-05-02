@@ -22,6 +22,7 @@ const COLOR_OPTIONS = [
 ];
 
 const TEMPO_OPTIONS = ['Slow', 'Medium', 'Upbeat'];
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 function timeAgo(iso) {
   if (!iso) return 'just now';
@@ -697,6 +698,151 @@ function InboxTab() {
   );
 }
 
+/* ====================== EVENTS TAB ====================== */
+
+function EventsTab() {
+  const [items, setItems] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [confirmId, setConfirmId] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const [title, setTitle] = useState('');
+  const [dateInput, setDateInput] = useState('');
+  const [time, setTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [description, setDescription] = useState('');
+  const [color, setColor] = useState(RED);
+
+  useEffect(() => {
+    const q = query(collection(db, 'events'), orderBy('sortDate', 'asc'));
+    return onSnapshot(q, (snap) => {
+      setItems(snap.docs.map((d) => ({ docId: d.id, ...d.data() })));
+    });
+  }, []);
+
+  const openAdd = () => {
+    setEditing(null);
+    setTitle('');
+    setDateInput('');
+    setTime('');
+    setLocation('');
+    setDescription('');
+    setColor(RED);
+    setShowForm(true);
+  };
+
+  const openEdit = (item) => {
+    setEditing(item);
+    setTitle(item.title || '');
+    setDateInput(item.sortDate || '');
+    setTime(item.time || '');
+    setLocation(item.location || '');
+    setDescription(item.description || '');
+    setColor(item.color || RED);
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim()) return alert('Title is required.');
+    if (!dateInput) return alert('Date is required.');
+    setSaving(true);
+    const dateObj = new Date(dateInput + 'T00:00:00');
+    const data = {
+      title: title.trim(),
+      sortDate: dateInput,
+      month: MONTHS[dateObj.getMonth()],
+      day: String(dateObj.getDate()),
+      time: time.trim(),
+      location: location.trim(),
+      description: description.trim(),
+      color,
+    };
+    try {
+      if (editing) {
+        await updateDoc(doc(db, 'events', editing.docId), data);
+      } else {
+        await addDoc(collection(db, 'events'), data);
+      }
+      setShowForm(false);
+    } catch (e) {
+      alert('Save failed: ' + e.message);
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (docId) => {
+    await deleteDoc(doc(db, 'events', docId));
+    setConfirmId(null);
+  };
+
+  return (
+    <div>
+      <div style={s.tabHeader}>
+        <h2 style={s.tabTitle}>Events</h2>
+        <button onClick={openAdd} style={s.addBtn}>+ Add Event</button>
+      </div>
+
+      {items.length === 0 ? (
+        <div style={s.empty}>
+          <span style={{ fontSize: 32 }}>📅</span>
+          <p style={s.emptyText}>No events yet.</p>
+        </div>
+      ) : (
+        items.map((item) => (
+          <div key={item.docId} style={s.itemCard}>
+            <div style={{ ...s.eventBadge, backgroundColor: item.color || RED }}>
+              <div style={s.eventBadgeMonth}>{item.month}</div>
+              <div style={s.eventBadgeDay}>{item.day}</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={s.itemTitle}>{item.title}</div>
+              <div style={s.itemPreview}>
+                {item.time}{item.time && item.location && ' · '}{item.location}
+              </div>
+            </div>
+            <div style={s.itemActions}>
+              <button onClick={() => openEdit(item)} style={s.editBtn}>Edit</button>
+              <button onClick={() => setConfirmId(item.docId)} style={s.deleteIconBtn}>🗑</button>
+            </div>
+          </div>
+        ))
+      )}
+
+      {showForm && (
+        <FormModal
+          title={editing ? 'Edit Event' : 'New Event'}
+          onClose={() => setShowForm(false)}
+          onSave={handleSave}
+          saving={saving}
+        >
+          <label style={s.label}>Title *</label>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Youth Service" style={s.input} />
+
+          <label style={s.label}>Date *</label>
+          <input type="date" value={dateInput} onChange={(e) => setDateInput(e.target.value)} style={s.input} />
+
+          <label style={s.label}>Time</label>
+          <input value={time} onChange={(e) => setTime(e.target.value)} placeholder="7:00 PM - 9:00 PM" style={s.input} />
+
+          <label style={s.label}>Location</label>
+          <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Grace Alive Ministries" style={s.input} />
+
+          <label style={s.label}>Description</label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Details about the event..." rows={3} style={s.textarea} />
+
+          <label style={s.label}>Accent Color</label>
+          <ColorPicker value={color} onChange={setColor} />
+        </FormModal>
+      )}
+
+      {confirmId && (
+        <ConfirmDelete name="event" onConfirm={() => handleDelete(confirmId)} onCancel={() => setConfirmId(null)} />
+      )}
+    </div>
+  );
+}
+
 /* ====================== MAIN SCREEN ====================== */
 
 export default function AdminScreen({ onClose }) {
@@ -720,8 +866,7 @@ export default function AdminScreen({ onClose }) {
     );
   }
 
-  const TABS = ['Devotionals', 'Announcements', 'Worship', 'Inbox'];
-
+const TABS = ['Devotionals', 'Announcements', 'Worship', 'Events', 'Inbox'];
   return (
     <div style={s.container}>
       <header style={s.header}>
@@ -743,10 +888,11 @@ export default function AdminScreen({ onClose }) {
       </nav>
 
       <main style={s.main}>
-        {activeTab === 'Devotionals' && <DevotionalsTab />}
-        {activeTab === 'Announcements' && <AnnouncementsTab />}
-        {activeTab === 'Worship' && <WorshipTab />}
-        {activeTab === 'Inbox' && <InboxTab />}
+{activeTab === 'Devotionals' && <DevotionalsTab />}
+{activeTab === 'Announcements' && <AnnouncementsTab />}
+{activeTab === 'Worship' && <WorshipTab />}
+{activeTab === 'Events' && <EventsTab />}
+{activeTab === 'Inbox' && <InboxTab />}
       </main>
     </div>
   );
@@ -960,5 +1106,16 @@ const s = {
     width: 32, height: 32, borderRadius: 16,
     border: 'none', cursor: 'pointer', padding: 0,
   },
-  colorOptionSelected: { boxShadow: `0 0 0 3px ${WARM_WHITE}, 0 0 0 5px ${DARK}` },
+colorOptionSelected: { boxShadow: `0 0 0 3px ${WARM_WHITE}, 0 0 0 5px ${DARK}` },
+  eventBadge: {
+    width: 48, height: 48, borderRadius: 10,
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  eventBadgeMonth: {
+    fontSize: 8, fontWeight: 800, color: 'rgba(255,255,255,0.85)',
+    textTransform: 'uppercase', letterSpacing: 1,
+  },
+  eventBadgeDay: { fontSize: 18, fontWeight: 900, color: WARM_WHITE, lineHeight: 1 },
 };
