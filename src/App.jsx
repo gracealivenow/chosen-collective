@@ -8,6 +8,7 @@ import PrayerScreen from './screens/PrayerScreen';
 import WorshipScreen from './screens/WorshipScreen';
 import ChatScreen from './screens/ChatScreen';
 import ConnectScreen from './screens/ConnectScreen';
+import AdminScreen from './screens/AdminScreen';
 import BottomTabs from './components/BottomTabs';
 import InstallPrompt from './components/InstallPrompt';
 
@@ -15,6 +16,7 @@ function MainApp() {
   const { user, loading } = useUser();
   const [showSignup, setShowSignup] = useState(false);
   const [activeTab, setActiveTab] = useState('Home');
+  const [adminMode, setAdminMode] = useState(false);
 
   if (loading) {
     return (
@@ -30,15 +32,19 @@ function MainApp() {
       : <LoginScreen onSwitch={() => setShowSignup(true)} />;
   }
 
+  if (adminMode) {
+    return <AdminScreen onClose={() => setAdminMode(false)} />;
+  }
+
   const renderScreen = () => {
     switch (activeTab) {
-      case 'Home': return <HomeScreen onNavigate={setActiveTab} />;
+      case 'Home': return <HomeScreen onNavigate={setActiveTab} onAdminClick={() => setAdminMode(true)} />;
       case 'Devo': return <DevoScreen />;
       case 'Prayer': return <PrayerScreen />;
       case 'Worship': return <WorshipScreen />;
       case 'Chat': return <ChatScreen />;
       case 'Connect': return <ConnectScreen />;
-      default: return <HomeScreen onNavigate={setActiveTab} />;
+      default: return <HomeScreen onNavigate={setActiveTab} onAdminClick={() => setAdminMode(true)} />;
     }
   };
 
@@ -46,7 +52,7 @@ function MainApp() {
     <>
       {renderScreen()}
       <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
-       <InstallPrompt />
+      <InstallPrompt />
     </>
   );
 }

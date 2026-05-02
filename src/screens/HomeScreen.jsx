@@ -13,8 +13,9 @@ const CREAM = '#FDFCF8';
 const WARM_WHITE = '#FFFFFF';
 const DARK = '#1A1A1A';
 const SOFT_GRAY = '#F2F0EB';
+const NAVY = '#1a1a2e';
 
-export default function HomeScreen({ onNavigate }) {
+export default function HomeScreen({ onNavigate, onAdminClick }) {
   const { user, profile } = useUser();
   const [announcements, setAnnouncements] = useState([]);
   const [devotional, setDevo] = useState(null);
@@ -53,6 +54,11 @@ export default function HomeScreen({ onNavigate }) {
     await signOut(auth);
   };
 
+  const handleAdmin = () => {
+    setShowProfile(false);
+    onAdminClick();
+  };
+
   return (
     <div style={s.outer}>
       {/* Profile Modal */}
@@ -64,6 +70,9 @@ export default function HomeScreen({ onNavigate }) {
             </div>
             <h2 style={s.modalName}>{profile?.fullName || user?.email}</h2>
             <p style={s.modalEmail}>{user?.email}</p>
+            {profile?.isAdmin && (
+              <button onClick={handleAdmin} style={s.adminBtn}>Admin Panel</button>
+            )}
             <button onClick={handleSignOut} style={s.signOutBtn}>Sign Out</button>
             <button onClick={() => setShowProfile(false)} style={s.closeBtn}>Close</button>
           </div>
@@ -185,6 +194,12 @@ const s = {
   modalAvatarText: { fontSize: 24, fontWeight: 900, color: '#FFF' },
   modalName: { fontSize: 18, fontWeight: 900, color: DARK, margin: '0 0 4px' },
   modalEmail: { fontSize: 13, color: '#777', margin: '0 0 24px' },
+  adminBtn: {
+    width: '100%', padding: 14, borderRadius: 100,
+    backgroundColor: NAVY, color: '#FFF', border: 'none',
+    fontSize: 14, fontWeight: 800, cursor: 'pointer',
+    fontFamily: 'inherit', marginBottom: 10,
+  },
   signOutBtn: {
     width: '100%', padding: 14, borderRadius: 100,
     backgroundColor: RED, color: '#FFF', border: 'none',
