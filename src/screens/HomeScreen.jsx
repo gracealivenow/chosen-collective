@@ -26,8 +26,7 @@ export default function HomeScreen({ onNavigate, onAdminClick }) {
     const unsubAnn = onSnapshot(annQ, (snap) => {
       setAnnouncements(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
-    const devoQ = query(collection(db, 'devotionals'), orderBy('date', 'desc'), limit(1));
-    const unsubDevo = onSnapshot(devoQ, (snap) => {
+const devoQ = query(collection(db, 'devotionals'), orderBy('id', 'desc'), limit(1));    const unsubDevo = onSnapshot(devoQ, (snap) => {
       if (!snap.empty) setDevo(snap.docs[0].data());
     });
     return () => {
@@ -85,17 +84,16 @@ export default function HomeScreen({ onNavigate, onAdminClick }) {
         </button>
       </header>
 
-      {/* Hero Verse Card */}
-      <div style={s.heroCard}>
-        <div style={s.heroBubble1} />
-        <div style={s.heroBubble2} />
-        <div style={s.heroLabel}>✦ VERSE OF THE DAY</div>
-        <p style={s.heroVerse}>
-          {devotional?.verse ||
-            '"For I know the plans I have for you" — this is the Lord\'s declaration — "plans for your well-being, not for disaster, to give you a future and a hope."'}
-        </p>
-        <div style={s.heroRef}>Jeremiah 29:11 CSB</div>
-      </div>
+     {/* Hero Verse Card */}
+<div style={s.heroCard}>
+  <div style={s.heroBubble1} />
+  <div style={s.heroBubble2} />
+  <div style={s.heroLabel}>✦ VERSE OF THE DAY</div>
+  <p style={s.heroVerse}>
+    {devotional?.verse ||
+      '"For I know the plans I have for you" — this is the Lord\'s declaration — "plans for your well-being, not for disaster, to give you a future and a hope." — Jeremiah 29:11 CSB'}
+  </p>
+</div>
 
       {/* Welcome */}
       <div style={s.welcomeRow}>
