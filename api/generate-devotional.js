@@ -14,7 +14,6 @@ function getDb() {
   return getFirestore();
 }
 
-// Topics to rotate through so no two devotionals feel the same
 const TOPICS = [
   "identity in Christ and knowing your worth",
   "dealing with anxiety and trusting God with your fears",
@@ -54,16 +53,23 @@ export default async function handler(req, res) {
   try {
     const db = getDb();
 
-    // Get last 7 devotionals to avoid repeating topics
+    // Get recent devotionals to avoid repeating
     const recent = await db
       .collection("devotionals")
       .orderBy("id", "desc")
-      .limit(7)
+      .limit(10)
       .get();
 
-    const recentTitles = recent.docs.map((d) => d.data().title || "").filter(Boolean).join(", ");
+    const recentTitles = recent.docs.map((d) => d.data().title || "").filter(Boolean);
+    const recentVerses = recent.docs
+      .map((d) => {
+        const v = d.data().verse || "";
+        // Extract the citation portion (after the em dash)
+        const match = v.match(/—\s*([^"]+?)(?:\s*CSB)?$/);
+        return match ? match[1].trim() : "";
+      })
+      .filter(Boolean);
 
-    // Pick topic and color based on day of year so they rotate predictably
     const dayOfYear = Math.floor(
       (Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000
     );
@@ -74,22 +80,32 @@ export default async function handler(req, res) {
 
 TODAY'S TOPIC: ${topic}
 
-RECENT DEVOTIONAL TITLES TO AVOID REPEATING: ${recentTitles || "none yet"}
+DEVOTIONALS RECENTLY WRITTEN (you MUST write something genuinely different):
+${recentTitles.length > 0 ? recentTitles.map((t, i) => `- "${t}" (verse: ${recentVerses[i] || 'unknown'})`).join('\n') : 'None yet'}
 
-CRITICAL REQUIREMENTS:
+ABSOLUTELY CRITICAL ANTI-REPETITION RULES:
+- DO NOT use any verse from the list above
+- DO NOT use any title similar to those above
+- If you've been writing about Isaiah 49:15-16, "You Are Not Forgotten", or anything about God remembering/inscribing names, you MUST pick a completely different angle and verse for the topic
+- Pick a Bible verse you haven't used in the last 10 devotionals
+- Write a title that hasn't appeared above
+- The Bible has thousands of verses - explore widely
+
+CONTENT REQUIREMENTS:
 - Use ONLY the Christian Standard Bible (CSB) translation
 - Write directly TO the teen - use "you" not "teens" or "young people"
 - Be honest, warm, and real - not preachy or churchy-sounding
-- The body should feel like a trusted older sibling talking to them, not a sermon
-- The reflection question should be personal and specific, not generic
-- Make it feel FRESH and different from typical devotionals
+- The body should feel like a trusted older sibling talking to them
+- The reflection question should be personal and specific
+- Make it feel FRESH, never recycled
 - Do NOT use phrases like "In today's world" or "As Christians" or "The Bible tells us"
+- Connect the verse to actual teen life (school, friendships, family, anxiety, identity, social media, romance, doubt)
 
-Return ONLY valid JSON with no markdown, no backticks, no extra text:
+Return ONLY valid JSON. No markdown, no backticks, no explanation:
 {
-  "title": "5 words max - compelling and specific to the topic",
+  "title": "5 words max - compelling and SPECIFIC to today's topic",
   "verse": "Full verse text with reference — Book Chapter:Verse CSB",
-  "body": "Three short paragraphs separated by single newlines. First hooks them with a relatable real-life scenario. Second unpacks the verse honestly. Third brings it home with hope and challenge.",
+  "body": "Three short paragraphs separated by single newlines. First hooks them with a relatable scenario. Second unpacks the verse honestly. Third brings it home with hope and challenge.",
   "reflection": "One specific personal question that actually makes them think"
 }`;
 
@@ -102,12 +118,11 @@ Return ONLY valid JSON with no markdown, no backticks, no extra text:
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 1200,
+        max_tokens: 1500,
         messages: [{ role: "user", content: prompt }],
       }),
     });
 
-    // CRITICAL: check that the API actually succeeded before parsing
     if (!response.ok) {
       const errorBody = await response.text();
       throw new Error(`Anthropic API ${response.status}: ${errorBody}`);
@@ -115,13 +130,10 @@ Return ONLY valid JSON with no markdown, no backticks, no extra text:
 
     const aiData = await response.json();
     let raw = aiData.content[0].text.trim();
-
-    // Strip markdown code fences if Claude added them despite instructions
     raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "");
 
     const devotional = JSON.parse(raw);
 
-    // Set fields the AI didn't provide
     const today = new Date();
     const dateKey = today.toISOString().split("T")[0];
     devotional.date = today.toLocaleDateString("en-US", {
@@ -130,7 +142,7 @@ Return ONLY valid JSON with no markdown, no backticks, no extra text:
       year: "numeric",
     });
     devotional.id = Date.now();
-    devotional.color = color; // override any color the AI chose
+    devotional.color = color;
     devotional.topic = topic;
     devotional.generatedAt = new Date().toISOString();
 
