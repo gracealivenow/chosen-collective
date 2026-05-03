@@ -41,6 +41,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,avif,webp}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],
