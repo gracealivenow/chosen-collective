@@ -48,6 +48,8 @@ const TOPICS = [
   "academic pressure and finding your value beyond grades",
 ];
 
+const COLORS = ["#E8302A", "#29ABE2", "#F5A623"];
+
 export default async function handler(req, res) {
   try {
     const db = getDb();
@@ -59,26 +61,16 @@ export default async function handler(req, res) {
       .limit(7)
       .get();
 
-    const recentTitles = recent.docs.map(d => d.data().title || "").join(", ");
+    const recentTitles = recent.docs.map((d) => d.data().title || "").filter(Boolean).join(", ");
 
-    // Pick a topic based on day of year so it rotates predictably
-    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+    // Pick topic and color based on day of year so they rotate predictably
+    const dayOfYear = Math.floor(
+      (Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000
+    );
     const topic = TOPICS[dayOfYear % TOPICS.length];
+    const color = COLORS[dayOfYear % COLORS.length];
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1200,
-        messages: [
-          {
-            role: "user",
-            content: `You are writing a daily devotional for The CHOSEN Collective - the youth group at Grace Alive Youth Ministry in Richmond, VA. The teens are ages 13-18.
+    const prompt = `You are writing a daily devotional for The CHOSEN Collective - the youth group at Grace Alive Youth Ministry in Richmond, VA. The teens are ages 13-18.
 
 TODAY'S TOPIC: ${topic}
 
@@ -97,21 +89,39 @@ Return ONLY valid JSON with no markdown, no backticks, no extra text:
 {
   "title": "5 words max - compelling and specific to the topic",
   "verse": "Full verse text with reference — Book Chapter:Verse CSB",
-  "body": "Three short paragraphs. First hooks them with a relatable real-life scenario. Second unpacks the verse honestly. Third brings it home with hope and challenge.",
-  "reflection": "One specific personal question that actually makes them think",
-  "color": "#E8302A"
-}
+  "body": "Three short paragraphs separated by single newlines. First hooks them with a relatable real-life scenario. Second unpacks the verse honestly. Third brings it home with hope and challenge.",
+  "reflection": "One specific personal question that actually makes them think"
+}`;
 
-Color must be exactly one of: #E8302A, #29ABE2, or #F5A623. Rotate through them.`,
-          },
-        ],
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1200,
+        messages: [{ role: "user", content: prompt }],
       }),
     });
 
+    // CRITICAL: check that the API actually succeeded before parsing
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`Anthropic API ${response.status}: ${errorBody}`);
+    }
+
     const aiData = await response.json();
-    const raw = aiData.content[0].text.trim();
+    let raw = aiData.content[0].text.trim();
+
+    // Strip markdown code fences if Claude added them despite instructions
+    raw = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "");
+
     const devotional = JSON.parse(raw);
 
+    // Set fields the AI didn't provide
     const today = new Date();
     const dateKey = today.toISOString().split("T")[0];
     devotional.date = today.toLocaleDateString("en-US", {
@@ -120,10 +130,21 @@ Color must be exactly one of: #E8302A, #29ABE2, or #F5A623. Rotate through them.
       year: "numeric",
     });
     devotional.id = Date.now();
+    devotional.color = color; // override any color the AI chose
+    devotional.topic = topic;
+    devotional.generatedAt = new Date().toISOString();
 
     await db.collection("devotionals").doc(dateKey).set(devotional);
 
-    return res.status(200).json({ success: true, devotional });
+    return res.status(200).json({
+      success: true,
+      devotional: {
+        date: devotional.date,
+        title: devotional.title,
+        topic: devotional.topic,
+        color: devotional.color,
+      },
+    });
   } catch (error) {
     console.error("Error generating devotional:", error);
     return res.status(500).json({ error: error.message });
