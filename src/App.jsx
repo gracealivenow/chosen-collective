@@ -12,6 +12,7 @@ import EventsScreen from './screens/EventsScreen';
 import AdminScreen from './screens/AdminScreen';
 import BottomTabs from './components/BottomTabs';
 import InstallPrompt from './components/InstallPrompt';
+import PullToRefresh from './components/PullToRefresh';
 
 function MainApp() {
   const { user, loading } = useUser();
@@ -63,12 +64,13 @@ function MainApp() {
   };
 
   return (
-    <>
-      {renderScreen()}
-      <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
-      <InstallPrompt />
-    </>
-  );
+  <>
+    <PullToRefresh disabled={activeTab === 'Chat'} />
+    {renderScreen()}
+    <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
+    <InstallPrompt />
+  </>
+);
 }
 
 export default function App() {

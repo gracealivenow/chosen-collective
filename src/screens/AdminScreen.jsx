@@ -241,7 +241,7 @@ function AnnouncementsTab() {
   const [confirmId, setConfirmId] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  const [date, setDate] = useState('');
+  const [dateInput, setDateInput] = useState('');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [emoji, setEmoji] = useState('📣');
@@ -254,9 +254,11 @@ function AnnouncementsTab() {
     });
   }, []);
 
+  const todayISO = () => new Date().toISOString().split('T')[0];
+
   const openAdd = () => {
     setEditing(null);
-    setDate('');
+    setDateInput(todayISO());
     setTitle('');
     setMessage('');
     setEmoji('📣');
@@ -266,7 +268,7 @@ function AnnouncementsTab() {
 
   const openEdit = (item) => {
     setEditing(item);
-    setDate(item.date || '');
+    setDateInput(item.sortDate || '');
     setTitle(item.title || '');
     setMessage(item.message || '');
     setEmoji(item.emoji || '📣');
@@ -276,9 +278,18 @@ function AnnouncementsTab() {
 
   const handleSave = async () => {
     if (!title.trim()) return alert('Title is required.');
+    if (!dateInput) return alert('Date is required.');
     setSaving(true);
+
+    const dateObj = new Date(dateInput + 'T00:00:00');
+    const formattedDate = dateObj.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+
     const data = {
-      date: date.trim(),
+      date: formattedDate,
+      sortDate: dateInput,
       title: title.trim(),
       message: message.trim(),
       emoji: emoji.trim() || '📣',
@@ -340,8 +351,8 @@ function AnnouncementsTab() {
           onSave={handleSave}
           saving={saving}
         >
-          <label style={s.label}>Date (e.g. Apr 23 or Today)</label>
-          <input value={date} onChange={(e) => setDate(e.target.value)} placeholder="Apr 23" style={s.input} />
+          <label style={s.label}>Date *</label>
+          <input type="date" value={dateInput} onChange={(e) => setDateInput(e.target.value)} style={s.input} />
 
           <label style={s.label}>Title *</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Sunday Service Time Change" style={s.input} />
